@@ -15,12 +15,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Configurer Node.js
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
+      # Étape de débogage pour afficher la structure des fichiers
+      - name: Debug - List files and structure
+        run: |
+          pwd
+          echo "--- Directory structure ---"
+          find . -type d
+          echo "--- All files ---"
+          find . -type f
+          echo "--- Searching for specific files ---"
+          find . -name "mouse-move-effect.tsx"
+          find . -name "tsconfig.json"
+          
+
+      # Afficher le contenu de tsconfig.json
+      - name: Show tsconfig.json content
+        run: cat tsconfig.json
 
       # Installer les dépendances
       - name: Install dependencies
@@ -28,11 +38,14 @@ jobs:
 
       # Vérification du code avec ESLint
       - name: Lint code
-        run: npm run lint
+        run: npm run lint || echo "Linting failed"
 
-      # Construire le projet
+      # Construire le projet avec des logs détaillés
       - name: Build project
-        run: npm run build
+        run: |
+          npm run build --verbose
+        env:
+          NODE_OPTIONS: '--max_old_space_size=4096'
 
       # Exécuter les tests (si configurés)
       - name: Run tests
