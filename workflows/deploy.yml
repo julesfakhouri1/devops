@@ -1,0 +1,65 @@
+name: Next.js CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Étape 1 : Récupérer le code
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      # Étape 2 : Configurer Node.js
+      - name: Utiliser Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      # Étape 3 : Installer les dépendances
+      - name: Installer les dépendances
+        run: npm ci
+
+      # Étape 4 : Vérification du code avec ESLint
+      - name: Vérification ESLint
+        run: npm run lint
+
+      # Étape 5 : Construire le projet
+      - name: Construire le projet
+        run: npm run build
+
+      # Étape 6 : Exécuter les tests (si configurés)
+      - name: Exécuter les tests
+        run: npm test
+
+  docker-build-and-push:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+
+    steps:
+      # Récupérer le code
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      # Connexion à Docker Hub
+      - name: Connexion à Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Construire et pousser l'image Docker
+      - name: Construire et pousser l'image Docker
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/devops-nextjs:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/devops-nextjs:${{ github.sha }}
